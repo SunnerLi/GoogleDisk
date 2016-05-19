@@ -201,7 +201,7 @@ class GoogleDisk(object):
                 res.append(llist[i])
         return res
         
-    def splitFileName(self, llist, position):
+    def splitlist(self, llist, position):
         """
             Split the file name list and the folder name list
             
@@ -209,7 +209,7 @@ class GoogleDisk(object):
             Ret: the file name list and the folder name list
             
             Usage: ....
-                   f, n = disk.splitFileName(mot, '.')
+                   f, n = disk.splitlist(mot, '.')
                    ....
         """
         _folder = []
@@ -219,10 +219,25 @@ class GoogleDisk(object):
                 llist.remove(folderList[i])
         return self.removeHiddenObject(llist), self.removeHiddenObject(folderList)
         
+    def update(self, position='./', ID=0):
+        """
+            Update the contain of the folder
+            
+            Arg: None
+            Ret: None
+        """
+        llist = self.getModified(position, folder_id=ID)
+        n, f = self.splitlist(llist, position)
+        for i in range(len(n)):
+            self.upload(n[i])
+        
+        # update the sub-folder
+        for i in range(len(f)):
+            idd = self.getID(f[i])
+            self.upload(position + f[i] + '/', idd)
+        print "update successful!"
+        
         
 disk = GoogleDisk()
 _q = disk.getFolder(id=0)
-mot = disk.getModified('.')
-f, n = disk.splitFileName(mot, '.')
-print f
-print n
+disk.update()
