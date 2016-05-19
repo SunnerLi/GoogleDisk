@@ -2,6 +2,7 @@
 
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+import os
 
 def GetListInFolder(folder_id):
     """
@@ -29,6 +30,32 @@ def GetFolderList(folder_list):
         if file['mimeType'] == "application/vnd.google-apps.folder":
             _l.append(file)
     return _l
+    
+def GetNameList(folder_id):
+    """
+        Get the name list of the specific folder
+        
+        Arg: the folder id
+        Ret: the name list
+    """
+    _l = GetListInFolder(folder_id)
+    _ll = []
+    for file in _l:
+        _ll.append(file['title'])
+    return _ll
+    
+def getFolderIDByNameAndQ(name, query):
+    """
+        Get the folder id by name and the exist query
+        
+        Arg: the name of the folder, query result
+        Ret: the folder id
+    """
+    for i in range(len(query)):
+        if query[i]['title'] == name:
+            return query[i]['id']
+    print "didn't find the folder ( ", name, " )"
+    return None
         
 def CreateFolder(folderName):
     """
@@ -40,14 +67,17 @@ def CreateFolder(folderName):
     file = drive.CreateFile({'title': folderName, "mimeType": "application/vnd.google-apps.folder"})
     file.Upload()
 
-def UploadFile(fileName):
+def UploadFile(fileName, id=-1):
     """
         Upload the file by the given file name
         
         Arg: the name of the file which want to upload
         Ret: None
     """
-    file = drive.CreateFile()
+    if not id  == -1:
+        file = drive.CreateFile({"parents": [{"id": id}]})
+    else:
+        file = drive.CreateFile()
     file.SetContentFile(fileName)
     file.Upload()
     
@@ -67,10 +97,72 @@ def DownloadFile(fileName, folderID):
     #print('Downloading file %s from Google Drive' % file3['title']) # 'hello.png'
     file.GetContentFile(fileName)
     
-def UploadFolder(folderName):
+def GetDifferWholeName(folder_id, position):
     """
+        Get the different name of the list
+        
+        Arg: the folder id
+        Ret: the name list which didn't exist in drive, the origin query
     """
-    pass
+    nowDirList = os.listdir(position)
+    driveDirList = GetNameList(folder_id)
+    res = []
+    for fileOut in range(len(nowDirList)):
+        exist = False
+        for fileIn in range(len(driveDirList)):
+            if nowDirList[fileOut] == driveDirList[fileIn]:
+                exist = True
+                print "drive have: ", nowDirList[fileOut]
+        if exist == False:
+            res.append(nowDirList[fileOut])
+    return res
+    
+def SplitFileName(nameList, position):
+    """
+        Split the file name list and the folder name list
+        
+        Arg: the name list
+        Ret: the file name list and the folder name list
+    """
+    folderList = next(os.walk(position))[1]
+    for i in range(len(folderList)):
+        nameList.remove(folderList[i])
+        
+    # remove the hidden file
+    for i in range(len(folderList)):
+        if folderList[i][:1] == '.':
+            folderList.remove(folderList[i])
+    for i in range(len(nameList)):
+        if nameList[i][:1] == '.':
+            nameList.remove(nameList[i])
+    return nameList, folderList
+    
+    
+def Update(position='./', _id=-1):
+    """
+        Update the contain of the folder
+        
+        Arg: None
+        Ret: None
+    """
+    if position == './':
+        #llist = GetDifferWholeName(0, position)
+        #n, f = SplitFileName(llist, position)
+        #for i in range(len(n)):
+        #    UploadFile(n[i])
+        pass
+    else:
+        llist = GetDifferWholeName(_id, position)
+        n, f = SplitFileName(llist, position)
+        for i in range(len(n)):
+            UploadFile(n[i])
+    
+    # update the sub-folder
+    for i in range(len(f)):
+        idd = getFolderIDByNameAndQ(f[i], llist)
+        Update(position + f[i] + '/', idd)
+    print "update successful!"
+
     
 gauth = GoogleAuth()
 gauth.LocalWebserverAuth()
@@ -82,8 +174,7 @@ driveList = drive.ListFile({'q': "'root' in parents"})._GetList()
 #print driveList
 #driveList2 = GetListInFolder("0B4D95KgQvoiRfjNuZEk0NUM5M2pITHFpeXFPZkhENW9GVEtjTjRMQk5pZzNCRjY2NmZmNEk")
 
-#DownloadFile('dog1.jpg', 0)
-
+Update()
 
 #print driveList[0]
 #print driveList[0]['mimeType']
