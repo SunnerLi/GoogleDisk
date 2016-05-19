@@ -4,21 +4,28 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import os
 
-def GetListInFolder(folder_id):
+"""
+    day folder id: 0B4D95KgQvoiRQjUwMmlvc09YZVk
+"""
+
+queryResult = None          # query result list
+
+def GoogleDisk_GetListInFolder(folder_id):
     """
         Get the list of the folder by the specific folder id
         0 represent root
         
         Arg: folder id
-        Ret: the list of the contain
+        Ret: None
     """
+    global queryResult
     if folder_id == 0:
-        return drive.ListFile({'q': "'root' in parents"})._GetList()
+        queryResult = drive.ListFile({'q': "'root' in parents"})._GetList()
     else:
         _q = {'q': "'{}' in parents and trashed=false".format(folder_id)}
-        return drive.ListFile(_q).GetList()
+        queryResult = drive.ListFile(_q).GetList()
         
-def GetFolderList(folder_list):
+def GoogleDisk_GetFolderList(folder_list):
     """
         Get the list of the whole folder within the given list
         
@@ -31,7 +38,7 @@ def GetFolderList(folder_list):
             _l.append(file)
     return _l
     
-def GetNameList(folder_id):
+def GoogleDisk_GetNameList(folder_id):
     """
         Get the name list of the specific folder
         
@@ -174,7 +181,8 @@ driveList = drive.ListFile({'q': "'root' in parents"})._GetList()
 #print driveList
 #driveList2 = GetListInFolder("0B4D95KgQvoiRfjNuZEk0NUM5M2pITHFpeXFPZkhENW9GVEtjTjRMQk5pZzNCRjY2NmZmNEk")
 
-Update()
+GoogleDisk_GetListInFolder('0B4D95KgQvoiRQjUwMmlvc09YZVk')
+print GoogleDisk_GetFolderList(queryResult)
 
 #print driveList[0]
 #print driveList[0]['mimeType']
